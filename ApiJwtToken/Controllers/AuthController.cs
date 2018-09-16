@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using ApiJwtToken.Data;
 using ApiJwtToken.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,7 +22,7 @@ namespace ApiJwtToken.Controllers
     {
         private UserManager<ApplicationUser> userManager;
 
-        public AuthController(UserManager<ApplicationUser> userManager)
+        public AuthController(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
         {
             this.userManager = userManager;
         }
@@ -31,6 +34,7 @@ namespace ApiJwtToken.Controllers
             var user = await userManager.FindByNameAsync(model.Username);
             if(user != null && await userManager.CheckPasswordAsync(user,model.Password))
             {
+                var _roles = await userManager.GetRolesAsync(user);
                 var claims = new[]
                 {
                     new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
@@ -49,10 +53,29 @@ namespace ApiJwtToken.Controllers
                 return Ok(new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
+                    roles = _roles,
                     expiration = token.ValidTo
                 });
             }
             return Unauthorized();
+        }
+
+        [HttpPost]
+        [Route("register")]
+        public async Task<IActionResult> Register([FromForm] RegisterModel model)
+        {
+            var user = await userManager.FindByNameAsync(model.UserName);
+            if (user != null)
+            {
+                return BadRequest();
+            }
+            else
+            {
+                return Ok(new
+                {
+                    
+                });
+            }
         }
     }
 }

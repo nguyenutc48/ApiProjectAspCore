@@ -56,6 +56,7 @@ namespace ApiJwtToken
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("MySupperSerureKey"))
                 };
             });
+            services.AddCors();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,6 +74,12 @@ namespace ApiJwtToken
             SeedDatabase.Initialize(app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope().ServiceProvider);
             app.UseAuthentication();
             app.UseHttpsRedirection();
+            app.UseCors(builder => builder
+                .WithOrigins("http://localhost:4200")
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials());
             app.UseMvc();
         }
     }
